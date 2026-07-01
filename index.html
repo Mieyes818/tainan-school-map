@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>台南國中小學區地圖｜陪你買好房</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{ --blue:#1C3D65; --gold:#C9A84C; --cream:#EFEDE7; --ink:#20242b; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif; color:var(--ink); }
+  #map{ position:absolute; inset:0; background:#e8e8e8; }
+
+  /* top brand bar */
+  #bar{ position:fixed; top:0; left:0; right:0; z-index:1000; height:56px;
+        background:linear-gradient(90deg,#16324f,var(--blue)); color:#fff;
+        display:flex; align-items:center; gap:12px; padding:0 16px;
+        border-bottom:2px solid var(--gold); box-shadow:0 2px 12px rgba(0,0,0,.25); }
+  #bar .logo{ width:30px;height:30px;border-radius:7px;background:var(--gold);color:var(--blue);
+        display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px;flex:none;}
+  #bar h1{ font-size:16px; margin:0; font-weight:800; letter-spacing:.5px; white-space:nowrap; }
+  #bar h1 small{ display:block; font-size:11px; font-weight:500; color:var(--gold); letter-spacing:1px; }
+  #bar .grow{ flex:1; }
+  #bar .lvl{ display:flex; background:rgba(255,255,255,.12); border-radius:9px; padding:3px; }
+  #bar .lvl button{ border:0; background:transparent; color:#dfe6ef; font-size:14px; font-weight:700;
+        padding:7px 15px; border-radius:7px; cursor:pointer; transition:.15s; }
+  #bar .lvl button.on{ background:var(--gold); color:var(--blue); }
+
+  /* control panel */
+  #panel{ position:fixed; top:68px; left:12px; z-index:1000; width:270px;
+        background:rgba(255,255,255,.97); border-radius:12px; box-shadow:0 6px 22px rgba(0,0,0,.18);
+        border:1px solid #dcdce2; overflow:hidden; }
+  #panel .sec{ padding:11px 13px; border-bottom:1px solid #eee; }
+  #panel .sec:last-child{ border-bottom:0; }
+  #search{ display:flex; gap:6px; }
+  #search input{ flex:1; border:1px solid #cfd2d8; border-radius:8px; padding:8px 10px; font-size:14px; outline:none; }
+  #search input:focus{ border-color:var(--blue); }
+  #search button{ border:0; background:var(--blue); color:#fff; border-radius:8px; padding:0 12px; font-weight:700; cursor:pointer; }
+  .row{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:#333; }
+  .muted{ color:#7a8190; font-size:12px; line-height:1.55; }
+  #count{ font-weight:800; color:var(--blue); }
+  .btn-official{ display:block; text-align:center; text-decoration:none; background:var(--gold); color:#3a2f10;
+        font-weight:800; font-size:13.5px; padding:9px; border-radius:8px; margin-top:2px; }
+  .disc{ background:#fff8e6; border:1px solid #f0dfa8; color:#7a5b12; border-radius:8px; padding:8px 10px; font-size:12px; line-height:1.6; }
+  .toggle{ cursor:pointer; user-select:none; }
+
+  /* legend chip */
+  .lg{ display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;border:1px solid rgba(0,0,0,.2);}
+
+  /* leaflet tweaks */
+  .leaflet-tooltip.zone-label{ background:rgba(28,61,101,.92); color:#fff; border:0; border-radius:6px;
+        font-weight:700; font-size:12px; padding:3px 7px; box-shadow:0 1px 4px rgba(0,0,0,.3); }
+  .leaflet-tooltip.zone-label:before{ display:none; }
+  .leaflet-popup-content{ font-size:13.5px; line-height:1.7; }
+  .pop-h{ font-weight:800; color:var(--blue); font-size:15px; }
+  .pop-t{ display:inline-block; background:var(--cream); color:#5b4a1e; border-radius:5px; padding:1px 7px; font-size:12px; font-weight:700; }
+
+  #toggler{ position:fixed; top:68px; left:12px; z-index:1001; display:none;
+        background:var(--blue); color:#fff; border:0; border-radius:10px; padding:9px 12px; font-weight:800; box-shadow:0 3px 12px rgba(0,0,0,.25); }
+  @media (max-width:760px){
+    #bar h1 small{ display:none; }
+    #panel{ top:60px; left:8px; right:8px; width:auto; transform:translateY(-8px); opacity:0; pointer-events:none; transition:.2s; }
+    #panel.open{ transform:none; opacity:1; pointer-events:auto; }
+    #toggler{ display:block; top:64px; }
+  }
+</style>
+</head>
+<body>
+<div id="bar">
+  <div class="logo">陪</div>
+  <h1>台南國中小學區地圖<small>陪你買好房 × 齊家不動產</small></h1>
+  <div class="grow"></div>
+  <div class="lvl">
+    <button id="btn-gs" class="on" onclick="switchLevel('gs')">國小</button>
+    <button id="btn-jh" onclick="switchLevel('jh')">國中</button>
+  </div>
+</div>
+
+<button id="toggler" onclick="document.getElementById('panel').classList.toggle('open')">☰ 選項</button>
+
+<div id="panel">
+  <div class="sec">
+    <div id="search">
+      <input id="q" type="search" placeholder="搜尋學校，如：勝利、崇學" autocomplete="off">
+      <button onclick="doSearch()">找</button>
+    </div>
+    <div class="muted" style="margin-top:6px">目前顯示 <span id="count">—</span> 個<span id="lvlname">國小</span>學區</div>
+    <div id="msg" style="margin-top:5px;font-size:12.5px;color:#b3541e;font-weight:700"></div>
+  </div>
+  <div class="sec">
+    <label class="row toggle"><input type="checkbox" id="labels" onchange="toggleLabels()"> 顯示校名標籤</label>
+    <div class="muted" style="margin-top:6px">滑過看校名，點擊看該校學區資訊。每個學區以顏色區分。</div>
+  </div>
+  <div class="sec">
+    <div class="disc"><b>學區僅供參考｜以官方為準。</b>本圖以「里」為單位上色，官方學區部分切至「鄰／門牌」，交界處請務必查官方系統確認。</div>
+    <a class="btn-official" href="https://std.tn.edu.tw/sis/anonyquery/SchoolDistrict.aspx" target="_blank" rel="noopener">🔎 查官方學區（台南市教育局）</a>
+  </div>
+  <div class="sec muted">
+    資料：115 學年度台南市國中小學區一覽表（台南市教育局）；村里界 內政部 2026／04（kiang/taiwan_basecode）。
+  </div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('map',{ preferCanvas:true, zoomControl:true, attributionControl:true }).setView([23.08,120.28], 11);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+  attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19
+}).addTo(map);
+
+let layers = { gs:null, jh:null };
+let current = 'gs';
+let showLabels = false;
+const store = {}; // level -> {feature, layer} list for search
+
+function hue(i){ return (i*137.508)%360; }
+function colorFor(i){ return `hsl(${hue(i).toFixed(0)},62%,58%)`; }
+
+function styleFn(color){ return { color:'#ffffff', weight:1, fillColor:color, fillOpacity:.5 }; }
+
+function buildLayer(level, data){
+  const schools = [...new Set(data.features.map(f=>f.properties.school))];
+  const cidx = {}; schools.forEach((s,i)=>cidx[s]=i);
+  store[level] = [];
+  const lyr = L.geoJSON(data, {
+    style: f => styleFn(colorFor(cidx[f.properties.school])),
+    onEachFeature: (f, l) => {
+      const p = f.properties;
+      l.bindTooltip(p.school.replace(p.home,''), {sticky:true, className:'zone-label', direction:'top', opacity:1});
+      l.bindPopup(
+        `<div class="pop-h">${p.school}</div>`+
+        `<span class="pop-t">${p.level}</span> <span class="pop-t">${p.home}</span> `+
+        `<span class="pop-t">含 ${p.n_vill} 里</span>`+
+        `<div style="margin-top:8px;font-size:12px;color:#7a5b12">實際學區以 <a href="https://std.tn.edu.tw/sis/anonyquery/SchoolDistrict.aspx" target="_blank" rel="noopener">官方查詢</a> 為準</div>`
+      );
+      l.on('mouseover', ()=> l.setStyle({weight:2.5, color:var_gold, fillOpacity:.72}));
+      l.on('mouseout',  ()=> lyr.resetStyle(l));
+      store[level].push({name:p.school, home:p.home, layer:l});
+    }
+  });
+  return lyr;
+}
+const var_gold = '#C9A84C';
+
+function refreshLabels(level){
+  store[level].forEach(o=>{
+    const t = o.layer.getTooltip();
+    if(showLabels){ o.layer.setTooltipContent(o.name.replace(o.home,'')); o.layer.openTooltip(); }
+    else{ o.layer.closeTooltip(); }
+  });
+}
+
+function switchLevel(level){
+  if(level===current && layers[level]) return;
+  ['gs','jh'].forEach(k=>{ if(layers[k] && map.hasLayer(layers[k])) map.removeLayer(layers[k]); });
+  current = level;
+  document.getElementById('btn-gs').classList.toggle('on', level==='gs');
+  document.getElementById('btn-jh').classList.toggle('on', level==='jh');
+  document.getElementById('lvlname').textContent = level==='gs'?'國小':'國中';
+  layers[level].addTo(map);
+  document.getElementById('count').textContent = new Set(store[level].map(o=>o.name)).size;
+  if(showLabels) refreshLabels(level);
+}
+
+function toggleLabels(){
+  showLabels = document.getElementById('labels').checked;
+  refreshLabels(current);
+}
+
+function doSearch(){
+  const q = document.getElementById('q').value.trim();
+  if(!q) return;
+  const msg = document.getElementById('msg');
+  const hits = store[current].filter(o=> o.name.includes(q));
+  if(!hits.length){ msg.textContent = '找不到「'+q+'」，試試 勝利、崇學、後甲（或切換國小/國中）'; return; }
+  msg.textContent = '';
+  const grp = L.featureGroup(hits.map(o=>o.layer));
+  map.fitBounds(grp.getBounds(), {padding:[60,60], maxZoom:15});
+  hits[0].layer.openPopup();
+}
+document.getElementById('q').addEventListener('keydown',e=>{ if(e.key==='Enter') doSearch(); });
+
+Promise.all([
+  fetch('gs.geojson').then(r=>r.json()),
+  fetch('jh.geojson').then(r=>r.json())
+]).then(([gs,jh])=>{
+  layers.gs = buildLayer('gs', gs);
+  layers.jh = buildLayer('jh', jh);
+  layers.gs.addTo(map);
+  document.getElementById('count').textContent = new Set(store.gs.map(o=>o.name)).size;
+}).catch(e=>{ document.getElementById('count').textContent='載入失敗'; console.error(e); });
+</script>
+</body>
+</html>

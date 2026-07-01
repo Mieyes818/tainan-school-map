@@ -1,0 +1,12 @@
+=== 國小 ===
+zones: 166 / parsed schools 213
+里 covered: 650/650 (100%)  uncovered:0
+unmatched claims: 1
+recovered (切分/近似): 0
+
+-- recovered --
+
+-- uncovered 里 (官方有,學區表未對到) --
+
+-- unmatched claims (學區表有,官方無此里) --
+安南區安里
