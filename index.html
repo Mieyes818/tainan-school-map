@@ -55,6 +55,28 @@
   .pop-h{ font-weight:800; color:var(--blue); font-size:15px; }
   .pop-t{ display:inline-block; background:var(--cream); color:#5b4a1e; border-radius:5px; padding:1px 7px; font-size:12px; font-weight:700; }
 
+  /* address lookup */
+  #addr-box{ display:flex; gap:6px; }
+  #addr-box input{ flex:1; border:1px solid #cfd2d8; border-radius:8px; padding:9px 10px; font-size:14px; outline:none; }
+  #addr-box input:focus{ border-color:var(--blue); }
+  #addr-box button{ border:0; background:var(--gold); color:#3a2f10; border-radius:8px; padding:0 15px; font-weight:800; cursor:pointer; font-size:14px; }
+  .rcard{ margin-top:9px; border-radius:10px; overflow:hidden; border:1px solid #e3e3e8; display:none; }
+  .rcard.show{ display:block; }
+  .rcard .rhead{ background:var(--blue); color:#fff; padding:7px 11px; font-size:13.5px; font-weight:800; }
+  .rcard .rbody{ padding:4px 11px; background:#fff; }
+  .tier{ display:flex; align-items:flex-start; gap:9px; padding:8px 0; }
+  .tier + .tier{ border-top:1px dashed #eee; }
+  .dot{ width:11px; height:11px; border-radius:50%; margin-top:5px; flex:none; }
+  .dot.g{ background:#2e9e5b; } .dot.y{ background:#e0a021; } .dot.r{ background:#9aa0aa; }
+  .tier .lvl2{ font-size:11.5px; color:#7a8190; font-weight:700; }
+  .tier .sch{ font-size:15px; font-weight:800; color:#20242b; }
+  .tier.y .sch{ color:#8a5a12; } .tier.r .sch{ color:#9aa0aa; font-size:14px; }
+  .tier .note{ font-size:11.5px; color:#8a6d1e; line-height:1.5; margin-top:1px; }
+  .tier.g .note{ color:#9aa0aa; }
+  .rcard .rfoot{ padding:8px 11px; background:#fff8e6; border-top:1px solid #f0dfa8; font-size:11.5px; color:#7a5b12; line-height:1.55; }
+  .rcard .rfoot a{ color:var(--blue); font-weight:800; }
+  .addr-title{ font-weight:800; color:var(--blue); font-size:14px; margin-bottom:7px; }
+
   #toggler{ position:fixed; top:68px; left:12px; z-index:1001; display:none;
         background:var(--blue); color:#fff; border:0; border-radius:10px; padding:9px 12px; font-weight:800; box-shadow:0 3px 12px rgba(0,0,0,.25); }
   @media (max-width:760px){
@@ -79,6 +101,19 @@
 <button id="toggler" onclick="document.getElementById('panel').classList.toggle('open')">☰ 選項</button>
 
 <div id="panel">
+  <div class="sec">
+    <div class="addr-title">🏠 輸入地址查學區</div>
+    <div id="addr-box">
+      <input id="addr" type="search" placeholder="例：東區裕農路135號" autocomplete="off">
+      <button onclick="lookupAddr()">查</button>
+    </div>
+    <div id="addr-msg" style="margin-top:5px;font-size:12px;color:#b3541e;font-weight:600"></div>
+    <div id="rcard" class="rcard">
+      <div class="rhead" id="rhead"></div>
+      <div class="rbody" id="rbody"></div>
+      <div class="rfoot">⚠️ 學區以官方公告為準，交界／門牌可能不同。<a href="https://std.tn.edu.tw/sis/anonyquery/SchoolDistrict.aspx" target="_blank" rel="noopener">前往官方查詢 →</a></div>
+    </div>
+  </div>
   <div class="sec">
     <div id="search">
       <input id="q" type="search" placeholder="搜尋學校，如：勝利、崇學" autocomplete="off">
@@ -181,10 +216,106 @@ function doSearch(){
 }
 document.getElementById('q').addEventListener('keydown',e=>{ if(e.key==='Enter') doSearch(); });
 
+/* ---- 輸入地址查學區 ---- */
+const DISTRICTS = ['七股區','下營區','中西區','仁德區','佳里區','六甲區','北區','北門區','南化區','南區','善化區','大內區','學甲區','安南區','安定區','安平區','官田區','將軍區','山上區','左鎮區','後壁區','新化區','新市區','新營區','東區','東山區','柳營區','楠西區','歸仁區','永康區','玉井區','白河區','西港區','關廟區','鹽水區','麻豆區','龍崎區'].sort((a,b)=>b.length-a.length);
+let NLIN={gs:null,jh:null}, CENT={}, ADDR_CACHE={}, addrMarker=null;
+
+function normHao(s){ return (s||'').replace(/[０-９]/g,d=>String.fromCharCode(d.charCodeAt(0)-0xFEE0)).replace(/號/g,'').replace(/之/g,'-').replace(/[–~〜－]/g,'-').trim(); }
+function haoKey(s){ const p=(s||'').split('-'); return (parseInt(p[0])||0)*1000+(p[1]?(parseInt(p[1])||0):0); }
+
+function parseAddr(raw){
+  let s=raw.replace(/\s/g,'').replace(/^(台灣|臺灣)?(台南市|臺南市)?/,'');
+  let dist=null;
+  for(const d of DISTRICTS){ const i=s.indexOf(d); if(i>=0){ dist=d; s=s.slice(i+d.length); break; } }
+  const xM=s.match(/(\d+)\s*巷/), nM=s.match(/(\d+)\s*弄/);
+  const xiang=xM?xM[1]:'', nong=nM?nM[1]:'';
+  let haoM=s.match(/(\d+(?:[之\-－]\d+)?)\s*號/), hao= haoM?normHao(haoM[1]):'';
+  if(!hao){ const t=s.match(/(\d+(?:[之\-]\d+)?)\s*$/); if(t) hao=normHao(t[1]); }
+  let road=s.replace(/(\d+)\s*巷[\s\S]*/,'').replace(/(\d+)\s*弄[\s\S]*/,'').replace(/(\d+(?:[之\-－]\d+)?)\s*號[\s\S]*/,'').replace(/\d+[\s\S]*$/,'').trim();
+  return {dist,road,xiang,nong,hao};
+}
+
+async function loadAddr(dist){
+  if(ADDR_CACHE[dist]) return ADDR_CACHE[dist];
+  const r=await fetch('addr/'+encodeURIComponent(dist)+'.json');
+  if(!r.ok) throw new Error('no addr');
+  const j=await r.json(); ADDR_CACHE[dist]=j; return j;
+}
+
+function findEntry(data,p){
+  const g=data.g, keys=Object.keys(g);
+  let cand = g[p.road+'|'+p.xiang+'|'+p.nong] ? [p.road+'|'+p.xiang+'|'+p.nong] : [];
+  if(!cand.length) cand=keys.filter(k=>{const a=k.split('|');return a[0]===p.road&&a[1]===p.xiang;});
+  if(!cand.length) cand=keys.filter(k=>k.split('|')[0]===p.road);
+  if(!cand.length && p.road) cand=keys.filter(k=>{const r=k.split('|')[0];return r.includes(p.road)||p.road.includes(r);});
+  if(!cand.length) return null;
+  let ent=[]; cand.forEach(k=>g[k].forEach(e=>ent.push({li:data.li[e[1]],kin:e[2],hao:e[0]})));
+  if(p.hao){
+    const ex=ent.find(e=>e.hao===p.hao);
+    if(ex) return {...ex,approx:false};
+    const t=haoKey(p.hao);
+    ent.sort((a,b)=>Math.abs(haoKey(a.hao)-t)-Math.abs(haoKey(b.hao)-t));
+    if(ent[0]) return {...ent[0],approx:true};
+  }
+  return ent[0]?{...ent[0],approx:true}:null;
+}
+
+function nlinLookup(T,dist,li,kin){
+  const rec=T&&T[dist+'|'+li]; if(!rec) return {status:'grey',schools:[]};
+  const k=String(kin), bk=rec.bk[k]||[], ck=rec.ck[k]||[];
+  if(bk.length||ck.length){
+    if(bk.length===1 && !ck.length) return {status:'green',schools:bk};
+    return {status:'yellow',schools:[...new Set([...bk,...ck])].sort()};
+  }
+  if(rec.bd.length){
+    if(rec.bd.length===1 && !rec.hc) return {status:'green',schools:rec.bd};
+    return {status:'yellow',schools:[...new Set([...rec.bd,...rec.cd])].sort()};
+  }
+  if(rec.cd.length) return {status:'yellow',schools:rec.cd};
+  return {status:'grey',schools:[]};
+}
+
+function tierHtml(name,r){
+  const c=r.status==='green'?'g':(r.status==='yellow'?'y':'r');
+  let sch,note;
+  if(r.status==='green'){ sch=r.schools[0]; note='綠燈：里內單一學校，參考度高'; }
+  else if(r.status==='yellow'){ sch=r.schools.join(' 或 ')||'—'; note='交界／共用學區，務必以官方為準'; }
+  else { sch='查無資料'; note='本圖無此里學區資料，請查官方'; }
+  return `<div class="tier ${c}"><span class="dot ${c}"></span><div><div class="lvl2">${name}</div><div class="sch">${sch}</div><div class="note">${note}</div></div></div>`;
+}
+
+async function lookupAddr(){
+  const raw=document.getElementById('addr').value.trim();
+  const msg=document.getElementById('addr-msg'), card=document.getElementById('rcard');
+  if(!raw) return;
+  const p=parseAddr(raw);
+  if(!p.dist){ msg.textContent='請包含行政區，如「東區」「永康區」'; card.classList.remove('show'); return; }
+  msg.textContent='查詢中…';
+  let data; try{ data=await loadAddr(p.dist); }catch(e){ msg.textContent=p.dist+'暫無門牌資料，請直接查官方'; card.classList.remove('show'); return; }
+  const hit=findEntry(data,p);
+  if(!hit){ msg.textContent=`在${p.dist}找不到「${p.road||raw}」，換個寫法或直接查官方`; card.classList.remove('show'); return; }
+  msg.textContent='';
+  const gsR=nlinLookup(NLIN.gs,p.dist,hit.li,hit.kin), jhR=nlinLookup(NLIN.jh,p.dist,hit.li,hit.kin);
+  document.getElementById('rhead').textContent=`${p.dist}${hit.li} ${hit.kin}鄰`+(hit.approx?'（門牌近似定位）':'');
+  document.getElementById('rbody').innerHTML=tierHtml('國小',gsR)+tierHtml('國中',jhR);
+  card.classList.add('show');
+  const c=CENT[p.dist+'|'+hit.li];
+  if(c){
+    if(addrMarker) map.removeLayer(addrMarker);
+    addrMarker=L.marker([c[0],c[1]]).addTo(map).bindPopup(`<div class="pop-h">${p.dist}${hit.li} ${hit.kin}鄰</div>國小：${gsR.schools[0]||'—'}<br>國中：${jhR.schools[0]||'—'}`);
+    map.setView([c[0],c[1]],15); addrMarker.openPopup();
+  }
+}
+document.getElementById('addr').addEventListener('keydown',e=>{ if(e.key==='Enter') lookupAddr(); });
+
 Promise.all([
   fetch('gs.geojson').then(r=>r.json()),
-  fetch('jh.geojson').then(r=>r.json())
-]).then(([gs,jh])=>{
+  fetch('jh.geojson').then(r=>r.json()),
+  fetch('gs_nlin.json').then(r=>r.json()),
+  fetch('jh_nlin.json').then(r=>r.json()),
+  fetch('li_centroids.json').then(r=>r.json())
+]).then(([gs,jh,gsn,jhn,cent])=>{
+  NLIN.gs=gsn; NLIN.jh=jhn; CENT=cent;
   layers.gs = buildLayer('gs', gs);
   layers.jh = buildLayer('jh', jh);
   layers.gs.addTo(map);
