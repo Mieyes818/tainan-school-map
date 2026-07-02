@@ -131,7 +131,7 @@
     <a class="btn-official" href="https://std.tn.edu.tw/sis/anonyquery/SchoolDistrict.aspx" target="_blank" rel="noopener">🔎 查官方學區（台南市教育局）</a>
   </div>
   <div class="sec muted">
-    資料：115 學年度台南市國中小學區一覽表（台南市教育局）；村里界 內政部 2026／04（kiang/taiwan_basecode）。
+    學區：台南市教育局學區查詢系統（官方，鄰級）；門牌：台南市政府門牌坐標開放資料；村里界：內政部 2026／04。
   </div>
 </div>
 
@@ -262,17 +262,10 @@ function findEntry(data,p){
 
 function nlinLookup(T,dist,li,kin){
   const rec=T&&T[dist+'|'+li]; if(!rec) return {status:'grey',schools:[]};
-  const k=String(kin), bk=rec.bk[k]||[], ck=rec.ck[k]||[];
-  if(bk.length||ck.length){
-    if(bk.length===1 && !ck.length) return {status:'green',schools:bk};
-    return {status:'yellow',schools:[...new Set([...bk,...ck])].sort()};
-  }
-  if(rec.bd.length){
-    if(rec.bd.length===1 && !rec.hc) return {status:'green',schools:rec.bd};
-    return {status:'yellow',schools:[...new Set([...rec.bd,...rec.cd])].sort()};
-  }
-  if(rec.cd.length) return {status:'yellow',schools:rec.cd};
-  return {status:'grey',schools:[]};
+  const k=String(kin);
+  const s=[...new Set([...(rec.all||[]),...((rec.kin&&rec.kin[k])||[])])].sort();
+  if(!s.length) return {status:'grey',schools:[]};
+  return {status: s.length===1?'green':'yellow', schools:s};
 }
 
 function tierHtml(name,r){
