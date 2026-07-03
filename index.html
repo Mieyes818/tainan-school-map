@@ -183,24 +183,8 @@
     <div class="disc"><b>學區僅供參考｜以官方為準。</b>本圖以「里」為單位上色，官方學區部分切至「鄰／門牌」，交界處請務必查官方系統確認。</div>
     <a class="btn-official" href="https://std.tn.edu.tw/sis/anonyquery/SchoolDistrict.aspx" target="_blank" rel="noopener">🔎 查官方學區（台南市教育局）</a>
   </div>
-  <div class="sec">
-    <button class="btn-share" onclick="openShare()">🔗 產生我的業務專屬分享連結</button>
-  </div>
   <div class="sec muted">
     學區：台南市教育局學區查詢系統（官方，鄰級）；門牌：台南市政府門牌坐標開放資料；村里界：內政部 2026／04。
-  </div>
-</div>
-
-<div id="share-modal" class="modal">
-  <div class="mbox">
-    <div class="mtit">業務專屬分享連結</div>
-    <p class="mnote">填你的聯絡方式，產生專屬網址分享給客戶。分享後，網站上方的姓名／電話／LINE 會自動變成你的（齊家品牌不變）。</p>
-    <label>姓名<input id="sh-name" maxlength="20" placeholder="王小明"></label>
-    <label>電話<input id="sh-tel" maxlength="30" placeholder="0912-345-678"></label>
-    <label>LINE 加好友連結<input id="sh-line" placeholder="https://lin.ee/..."></label>
-    <button class="mgen" onclick="genLink()">產生連結</button>
-    <div id="sh-out"></div>
-    <button class="mclose" onclick="closeShare()">關閉</button>
   </div>
 </div>
 
@@ -234,15 +218,6 @@ function applyAgent(){
   const mk=document.getElementById('maker'); if(mk) mk.innerHTML='製作：<b style="color:var(--blue)">齊家不動產 '+esc(AGENT.name)+'</b>　<a class="a-line" href="'+esc(AGENT.line)+'" target="_blank" rel="noopener" style="color:#06934a;font-weight:800">LINE 洽詢</a>';
 }
 applyAgent();
-function openShare(){ document.getElementById('sh-name').value=AGENT.name; document.getElementById('sh-tel').value=AGENT.tel; document.getElementById('sh-line').value=AGENT.line; document.getElementById('share-modal').style.display='flex'; genLink(); }
-function closeShare(){ document.getElementById('share-modal').style.display='none'; }
-function genLink(){
-  const n=document.getElementById('sh-name').value.trim(), t=document.getElementById('sh-tel').value.trim(), l=document.getElementById('sh-line').value.trim();
-  const u=new URL(location.origin+location.pathname);
-  if(n) u.searchParams.set('name',n); if(t) u.searchParams.set('tel',t); if(l) u.searchParams.set('line',l);
-  document.getElementById('sh-out').innerHTML='<input readonly id="sh-url" value="'+esc(u.toString())+'"><button onclick="copyShare(event)">複製我的專屬連結</button>';
-}
-function copyShare(e){ const i=document.getElementById('sh-url'); i.select(); try{navigator.clipboard.writeText(i.value);}catch(_){document.execCommand('copy');} e.target.textContent='已複製 ✓'; setTimeout(()=>e.target.textContent='複製我的專屬連結',1500); }
 
 let layers = { gs:null, jh:null };
 let current = 'gs';
