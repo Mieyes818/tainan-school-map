@@ -50,6 +50,12 @@
   /* legend chip */
   .lg{ display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;border:1px solid rgba(0,0,0,.2);}
 
+  /* 學校位置標記 */
+  .sch-ic{ background:none; border:0; }
+  .sch-pin{ width:24px; height:24px; border-radius:50%; background:var(--blue); border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.42); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .sch-pin:hover{ background:var(--gold); }
+  .sch-pin svg{ width:13px; height:13px; }
+
   /* leaflet tweaks */
   .leaflet-tooltip.zone-label{ background:rgba(28,61,101,.92); color:#fff; border:0; border-radius:6px;
         font-weight:700; font-size:12px; padding:3px 7px; box-shadow:0 1px 4px rgba(0,0,0,.3); }
@@ -170,8 +176,9 @@
     <div id="msg" style="margin-top:5px;font-size:12.5px;color:#b3541e;font-weight:700"></div>
   </div>
   <div class="sec">
-    <label class="row toggle"><input type="checkbox" id="labels" onchange="toggleLabels()"> 顯示校名標籤</label>
-    <div class="muted" style="margin-top:6px">滑過看校名，點擊看該校學區資訊。每個學區以顏色區分。</div>
+    <label class="row toggle"><input type="checkbox" id="pins" checked onchange="togglePins()"> 顯示學校位置 📍</label>
+    <label class="row toggle" style="margin-top:7px"><input type="checkbox" id="labels" onchange="toggleLabels()"> 顯示校名標籤</label>
+    <div class="muted" style="margin-top:6px">點學校圖示或學區看該校資訊（里/鄰）。每個學區以顏色區分。</div>
   </div>
   <div class="sec">
     <div class="disc"><b>學區僅供參考｜以官方為準。</b>本圖以「里」為單位上色，官方學區部分切至「鄰／門牌」，交界處請務必查官方系統確認。</div>
@@ -242,6 +249,10 @@ let layers = { gs:null, jh:null };
 let current = 'gs';
 let showLabels = false;
 const store = {}; // level -> {feature, layer} list for search
+let SCHOOL_POINTS = {};
+const markerGroups = { gs:L.layerGroup(), jh:L.layerGroup() };
+let showPins = true;
+function schoolIcon(){ return L.divIcon({ className:'sch-ic', html:'<div class="sch-pin"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 3.2 3.2 10.6V21h6.4v-5.6h4.8V21H21V10.6z"/></svg></div>', iconSize:[24,24], iconAnchor:[12,12] }); }
 
 function hue(i){ return (i*137.508)%360; }
 function colorFor(i){ return `hsl(${hue(i).toFixed(0)},62%,58%)`; }
@@ -260,7 +271,12 @@ function buildLayer(level, data){
       l.bindPopup(buildZonePopup(p), {maxWidth:344, maxHeight:380});
       l.on('mouseover', ()=> l.setStyle({weight:2.5, color:var_gold, fillOpacity:.72}));
       l.on('mouseout',  ()=> lyr.resetStyle(l));
-      store[level].push({name:p.school, home:p.home, layer:l});
+      const pt = SCHOOL_POINTS[p.school];
+      let mk = null;
+      if(pt){ mk = L.marker([pt[0],pt[1]], {icon:schoolIcon(), title:p.school.replace(p.home,'')});
+        mk.bindPopup(buildZonePopup(p), {maxWidth:344, maxHeight:380});
+        markerGroups[level].addLayer(mk); }
+      store[level].push({name:p.school, home:p.home, layer:l, marker:mk});
     }
   });
   return lyr;
@@ -292,15 +308,17 @@ function refreshLabels(level){
 
 function switchLevel(level){
   if(level===current && layers[level]) return;
-  ['gs','jh'].forEach(k=>{ if(layers[k] && map.hasLayer(layers[k])) map.removeLayer(layers[k]); });
+  ['gs','jh'].forEach(k=>{ if(layers[k] && map.hasLayer(layers[k])) map.removeLayer(layers[k]); if(map.hasLayer(markerGroups[k])) map.removeLayer(markerGroups[k]); });
   current = level;
   document.getElementById('btn-gs').classList.toggle('on', level==='gs');
   document.getElementById('btn-jh').classList.toggle('on', level==='jh');
   document.getElementById('lvlname').textContent = level==='gs'?'國小':'國中';
   layers[level].addTo(map);
+  if(showPins) markerGroups[level].addTo(map);
   document.getElementById('count').textContent = new Set(store[level].map(o=>o.name)).size;
   if(showLabels) refreshLabels(level);
 }
+function togglePins(){ showPins=document.getElementById('pins').checked; if(showPins) markerGroups[current].addTo(map); else map.removeLayer(markerGroups[current]); }
 
 function toggleLabels(){
   showLabels = document.getElementById('labels').checked;
@@ -411,12 +429,14 @@ Promise.all([
   fetch('gs_nlin.json').then(r=>r.json()),
   fetch('jh_nlin.json').then(r=>r.json()),
   fetch('li_centroids.json').then(r=>r.json()),
-  fetch('school_villages.json').then(r=>r.json())
-]).then(([gs,jh,gsn,jhn,cent,sv])=>{
-  NLIN.gs=gsn; NLIN.jh=jhn; CENT=cent; SCHOOL_VILLAGES=sv;
+  fetch('school_villages.json').then(r=>r.json()),
+  fetch('school_points.json').then(r=>r.json())
+]).then(([gs,jh,gsn,jhn,cent,sv,sp])=>{
+  NLIN.gs=gsn; NLIN.jh=jhn; CENT=cent; SCHOOL_VILLAGES=sv; SCHOOL_POINTS=sp;
   layers.gs = buildLayer('gs', gs);
   layers.jh = buildLayer('jh', jh);
   layers.gs.addTo(map);
+  if(showPins) markerGroups.gs.addTo(map);
   document.getElementById('count').textContent = new Set(store.gs.map(o=>o.name)).size;
 }).catch(e=>{ document.getElementById('count').textContent='載入失敗'; console.error(e); });
 </script>
