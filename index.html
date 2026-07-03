@@ -57,6 +57,14 @@
   .leaflet-popup-content{ font-size:13.5px; line-height:1.7; }
   .pop-h{ font-weight:800; color:var(--blue); font-size:15px; }
   .pop-t{ display:inline-block; background:var(--cream); color:var(--blue); border-radius:5px; padding:1px 7px; font-size:12px; font-weight:700; }
+  .pop-sub{ font-size:12px; color:#5a6472; margin:3px 0 7px; }
+  .pop-sub b{ color:var(--blue); }
+  .pop-lis{ max-height:186px; overflow-y:auto; display:flex; flex-wrap:wrap; gap:4px 5px; padding:2px; }
+  .pv{ background:var(--grey-l); border:1px solid #e2e6e9; border-radius:6px; padding:2px 7px; font-size:12px; color:#2a3340; white-space:nowrap; }
+  .pv b{ color:#407864; margin-left:2px; font-weight:800; }
+  .pv i{ color:#8a94a2; font-style:normal; margin-right:1px; font-size:11px; }
+  .pop-foot{ margin-top:8px; font-size:11px; color:#7a8190; border-top:1px solid #eee; padding-top:6px; }
+  .pop-foot a{ color:var(--blue); font-weight:800; }
 
   /* address lookup */
   #addr-box{ display:flex; gap:6px; }
@@ -107,8 +115,8 @@
 </head>
 <body>
 <div id="bar">
-  <div class="logo"><svg viewBox="0 0 40 34" aria-label="齊家不動產"><path d="M20 4 3 18h4v12h9v-7h4v7h9V18h4z" fill="#fff"/><path d="M27 11 40 22v9H25v-8h-3v8h-3v-9z" fill="#7EAC96"/></svg></div>
-  <h1>台南國中小學區地圖<small>齊家不動產 Khí-ke Real Estate</small></h1>
+  <div class="logo"><img src="logo-white.png" alt="齊家不動產"></div>
+  <h1>台南國中小學區地圖<small>齊家不動產 × 陪你買好房</small></h1>
   <div class="grow"></div>
   <div class="contact">
     <span class="ci addr">📍 台南市東區林森路一段149號20樓之9</span>
@@ -193,12 +201,7 @@ function buildLayer(level, data){
     onEachFeature: (f, l) => {
       const p = f.properties;
       l.bindTooltip(p.school.replace(p.home,''), {sticky:true, className:'zone-label', direction:'top', opacity:1});
-      l.bindPopup(
-        `<div class="pop-h">${p.school}</div>`+
-        `<span class="pop-t">${p.level}</span> <span class="pop-t">${p.home}</span> `+
-        `<span class="pop-t">含 ${p.n_vill} 里</span>`+
-        `<div style="margin-top:8px;font-size:12px;color:#7a5b12">實際學區以 <a href="https://std.tn.edu.tw/sis/anonyquery/SchoolDistrict.aspx" target="_blank" rel="noopener">官方查詢</a> 為準</div>`
-      );
+      l.bindPopup(buildZonePopup(p), {maxWidth:344, maxHeight:380});
       l.on('mouseover', ()=> l.setStyle({weight:2.5, color:var_gold, fillOpacity:.72}));
       l.on('mouseout',  ()=> lyr.resetStyle(l));
       store[level].push({name:p.school, home:p.home, layer:l});
@@ -207,6 +210,21 @@ function buildLayer(level, data){
   return lyr;
 }
 const var_gold = '#1C3D65';
+let SCHOOL_VILLAGES = {};
+function buildZonePopup(p){
+  const vs = SCHOOL_VILLAGES[p.school] || [];
+  const body = vs.length ? `<div class="pop-lis">`+vs.map(v=>{
+      const d=v[0], li=v[1], kin=v[2];
+      const area=(d && d!==p.home)?`<i>${d}</i>`:'';
+      const k=(kin==='全'||!kin)?'':`<b>${kin.replace('鄰','')}鄰</b>`;
+      return `<span class="pv">${area}${li}${k}</span>`;
+    }).join('')+`</div>` : '';
+  const n = vs.length || p.n_vill;
+  return `<div class="pop-h">${p.school.replace(p.home,'')}</div>`+
+    `<div class="pop-sub"><b>${p.level}</b> · ${p.home} · 學區共 <b>${n}</b> 里</div>`+
+    body+
+    `<div class="pop-foot">交界依「鄰」細分，以官方公告為準　<a href="https://std.tn.edu.tw/sis/anonyquery/SchoolDistrict.aspx" target="_blank" rel="noopener">官方查詢 →</a></div>`;
+}
 
 function refreshLabels(level){
   store[level].forEach(o=>{
@@ -336,9 +354,10 @@ Promise.all([
   fetch('jh.geojson').then(r=>r.json()),
   fetch('gs_nlin.json').then(r=>r.json()),
   fetch('jh_nlin.json').then(r=>r.json()),
-  fetch('li_centroids.json').then(r=>r.json())
-]).then(([gs,jh,gsn,jhn,cent])=>{
-  NLIN.gs=gsn; NLIN.jh=jhn; CENT=cent;
+  fetch('li_centroids.json').then(r=>r.json()),
+  fetch('school_villages.json').then(r=>r.json())
+]).then(([gs,jh,gsn,jhn,cent,sv])=>{
+  NLIN.gs=gsn; NLIN.jh=jhn; CENT=cent; SCHOOL_VILLAGES=sv;
   layers.gs = buildLayer('gs', gs);
   layers.jh = buildLayer('jh', jh);
   layers.gs.addTo(map);
