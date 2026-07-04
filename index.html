@@ -53,8 +53,8 @@
   .sch-ic{ background:none; border:0; }
   .sch-ic{ transform-origin:50% 100%; transition:transform .12s; cursor:pointer; filter:drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
   .sch-ic:hover{ transform:scale(1.16); z-index:1000; }
-  .sch-ic .pin-body{ transition:fill .12s; }
-  .sch-ic:hover .pin-body{ fill:var(--gold); }
+  .sch-ic svg{ filter:drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff) drop-shadow(0 1.5px 2px rgba(0,0,0,.4)); transition:transform .12s; transform-origin:bottom center; }
+  .sch-ic:hover svg{ transform:scale(1.2); }
 
   /* leaflet tweaks */
   .leaflet-tooltip.zone-label{ background:rgba(28,61,101,.92); color:#fff; border:0; border-radius:6px;
@@ -227,7 +227,7 @@ const store = {}; // level -> {feature, layer} list for search
 let SCHOOL_POINTS = {};
 const markerGroups = { gs:L.layerGroup(), jh:L.layerGroup() };
 let showPins = true;
-function schoolIcon(){ return L.divIcon({ className:'sch-ic', html:'<svg width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg"><path class="pin-body" d="M13 33S24 20.6 24 12.3C24 6 19.1 1 13 1S2 6 2 12.3C2 20.6 13 33 13 33Z" fill="#1C3D65" stroke="#fff" stroke-width="1.6"/><circle cx="13" cy="12" r="6.6" fill="#fff"/><path d="M13 8.1l6.1 2.6L13 13.3 6.9 10.7z" fill="#1C3D65"/><path d="M9.6 12.1v2.2c0 .9 1.5 1.6 3.4 1.6s3.4-.7 3.4-1.6v-2.2" fill="none" stroke="#1C3D65" stroke-width="1.1"/></svg>', iconSize:[26,34], iconAnchor:[13,33], popupAnchor:[0,-29] }); }
+function schoolIcon(){ return L.divIcon({ className:'sch-ic', html:'<svg width="32" height="32" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="40" width="42" height="5" rx="2.5" fill="#274b5a"/><rect x="4" y="24" width="13" height="17" fill="#ffe3ad"/><rect x="31" y="24" width="13" height="17" fill="#ffe3ad"/><path d="M1.5 25L18 25 15 18 4.5 18Z" fill="#ef6350"/><path d="M46.5 25L30 25 33 18 43.5 18Z" fill="#ef6350"/><rect x="16" y="14" width="16" height="27" fill="#fff0c9"/><path d="M13 16L24 6 35 16Z" fill="#ef6350"/><rect x="23.2" y=".5" width="1.6" height="7" fill="#5b4a41"/><path d="M24.8 1h8L30.6 3.2 32.8 5.4h-8z" fill="#e84d3d"/><circle cx="24" cy="17.5" r="4.2" fill="#fff" stroke="#2e4b5e" stroke-width="1.4"/><path d="M24 15.6v2l1.6 1" stroke="#2e4b5e" stroke-width="1.2" fill="none" stroke-linecap="round"/><path d="M20.5 41v-9a3.5 3.5 0 0 1 7 0v9z" fill="#4f6f80"/><rect x="7" y="28" width="3.6" height="5" rx="1.2" fill="#7fa3b5"/><rect x="12" y="28" width="3.6" height="5" rx="1.2" fill="#7fa3b5"/><rect x="32.4" y="28" width="3.6" height="5" rx="1.2" fill="#7fa3b5"/><rect x="37.4" y="28" width="3.6" height="5" rx="1.2" fill="#7fa3b5"/></svg>', iconSize:[32,32], iconAnchor:[16,30], popupAnchor:[0,-26] }); }
 
 function hue(i){ return (i*137.508)%360; }
 function colorFor(i){ return `hsl(${hue(i).toFixed(0)},62%,60%)`; }
