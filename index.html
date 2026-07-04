@@ -4,16 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>台南國中小學區地圖｜陪你買好房</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-  :root{ --blue:#1C3D65; --navy-d:#062345; --gold:#407864; --green-l:#5E8472; --accent-l:#7EAC96; --grey:#DCDDDD; --grey-l:#F5F6F7; --cream:#DCDDDD; --ink:#20242b; }
+  :root{ --blue:#1C3D65; --navy-d:#062345; --gold:#7DA3CA; --green-l:#325B8E; --accent-l:#7DA3CA; --grey:#DCDDDD; --grey-l:#F7F8F8; --cream:#DCDDDD; --ink:#062345; }
   *{ box-sizing:border-box; }
-  html,body{ margin:0; height:100%; font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif; color:var(--ink); }
-  #map{ position:absolute; inset:0; background:#e8e8e8; }
+  html,body{ margin:0; height:100%; font-family:"Franklin Gothic Medium","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif; color:var(--ink); }
+  #map{ position:absolute; inset:0; background:#DCDDDD; }
 
   /* top brand bar */
   #bar{ position:fixed; top:0; left:0; right:0; z-index:1000; height:56px;
-        background:linear-gradient(90deg,#16324f,var(--blue)); color:#fff;
+        background:linear-gradient(90deg,#00355E,var(--blue)); color:#fff;
         display:flex; align-items:center; gap:12px; padding:0 16px;
         border-bottom:2px solid var(--gold); box-shadow:0 2px 12px rgba(0,0,0,.25); }
   #bar .logo{ flex:none; display:flex; align-items:center; justify-content:center; background:#fff; border-radius:9px; padding:4px 8px; height:36px; box-shadow:0 1px 4px rgba(0,0,0,.2); }
@@ -22,27 +24,27 @@
   #bar h1 small{ display:block; font-size:12.5px; font-weight:500; color:var(--accent-l); letter-spacing:normal; line-height:1.15; margin-top:4px; white-space:normal; text-align:justify; text-align-last:justify; }
   #bar .grow{ flex:1; }
   #bar .lvl{ display:flex; background:rgba(255,255,255,.12); border-radius:9px; padding:3px; }
-  #bar .lvl button{ border:0; background:transparent; color:#dfe6ef; font-size:14px; font-weight:700;
+  #bar .lvl button{ border:0; background:transparent; color:#DCDDDD; font-size:14px; font-weight:700;
         padding:7px 15px; border-radius:7px; cursor:pointer; transition:.15s; }
   #bar .lvl button.on{ background:var(--gold); color:#fff; }
 
   /* control panel */
   #panel{ position:fixed; top:68px; left:12px; z-index:1000; width:270px;
         background:rgba(255,255,255,.97); border-radius:12px; box-shadow:0 6px 22px rgba(0,0,0,.18);
-        border:1px solid #dcdce2; max-height:calc(100vh - 84px); overflow-y:auto; overflow-x:hidden;
+        border:1px solid #DCDDDD; max-height:calc(100vh - 84px); overflow-y:auto; overflow-x:hidden;
         -webkit-overflow-scrolling:touch; }
-  #panel .sec{ padding:11px 13px; border-bottom:1px solid #eee; }
+  #panel .sec{ padding:11px 13px; border-bottom:1px solid #DCDDDD; }
   #panel .sec:last-child{ border-bottom:0; }
   #search{ display:flex; gap:6px; }
-  #search input{ flex:1; border:1px solid #cfd2d8; border-radius:8px; padding:8px 10px; font-size:14px; outline:none; }
+  #search input{ flex:1; border:1px solid #DCDDDD; border-radius:8px; padding:8px 10px; font-size:14px; outline:none; }
   #search input:focus{ border-color:var(--blue); }
   #search button{ border:0; background:var(--blue); color:#fff; border-radius:8px; padding:0 12px; font-weight:700; cursor:pointer; }
-  .row{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:#333; }
-  .muted{ color:#7a8190; font-size:12px; line-height:1.55; }
+  .row{ display:flex; align-items:center; gap:8px; font-size:13.5px; color:#062345; }
+  .muted{ color:#7B8388; font-size:12px; line-height:1.55; }
   #count{ font-weight:800; color:var(--blue); }
   .btn-official{ display:block; text-align:center; text-decoration:none; background:var(--gold); color:#fff;
         font-weight:800; font-size:13.5px; padding:9px; border-radius:8px; margin-top:2px; }
-  .disc{ background:var(--grey-l); border:1px solid var(--grey); color:#41505f; border-radius:8px; padding:8px 10px; font-size:12px; line-height:1.6; }
+  .disc{ background:var(--grey-l); border:1px solid var(--grey); color:#062345; border-radius:8px; padding:8px 10px; font-size:12px; line-height:1.6; }
   .disc b{ color:var(--blue); }
   .toggle{ cursor:pointer; user-select:none; }
 
@@ -63,49 +65,49 @@
   .leaflet-popup-content{ font-size:13.5px; line-height:1.7; }
   .pop-h{ font-weight:800; color:var(--blue); font-size:15px; }
   .pop-t{ display:inline-block; background:var(--cream); color:var(--blue); border-radius:5px; padding:1px 7px; font-size:12px; font-weight:700; }
-  .pop-sub{ font-size:12px; color:#5a6472; margin:3px 0 7px; }
+  .pop-sub{ font-size:12px; color:#7B8388; margin:3px 0 7px; }
   .pop-sub b{ color:var(--blue); }
   .pop-lis{ max-height:186px; overflow-y:auto; display:flex; flex-wrap:wrap; gap:4px 5px; padding:2px; }
-  .pv{ background:var(--grey-l); border:1px solid #e2e6e9; border-radius:6px; padding:2px 7px; font-size:12px; color:#2a3340; white-space:nowrap; }
-  .pv b{ color:#407864; margin-left:2px; font-weight:800; }
-  .pv i{ color:#8a94a2; font-style:normal; margin-right:1px; font-size:11px; }
-  .pop-foot{ margin-top:8px; font-size:11px; color:#7a8190; border-top:1px solid #eee; padding-top:6px; }
+  .pv{ background:var(--grey-l); border:1px solid #DCDDDD; border-radius:6px; padding:2px 7px; font-size:12px; color:#062345; white-space:nowrap; }
+  .pv b{ color:#325B8E; margin-left:2px; font-weight:800; }
+  .pv i{ color:#989DA0; font-style:normal; margin-right:1px; font-size:11px; }
+  .pop-foot{ margin-top:8px; font-size:11px; color:#7B8388; border-top:1px solid #DCDDDD; padding-top:6px; }
   .pop-foot a{ color:var(--blue); font-weight:800; }
-  .pop-cta{ margin-top:9px; padding-top:10px; border-top:1px solid #eee; text-align:center; }
-  .pop-cta .cta-t{ font-size:12.5px; color:#20242b; font-weight:800; margin-bottom:7px; }
+  .pop-cta{ margin-top:9px; padding-top:10px; border-top:1px solid #DCDDDD; text-align:center; }
+  .pop-cta .cta-t{ font-size:12.5px; color:#062345; font-weight:800; margin-bottom:7px; }
   .pop-cta .cta-b{ display:block; text-decoration:none; border-radius:7px; padding:8px; font-weight:800; font-size:13.5px; margin-top:5px; }
   .pop-cta .cta-b.line{ background:#06C755; color:#fff; }
   .pop-cta .cta-b.tel{ background:var(--blue); color:#fff; }
 
   /* address lookup */
   #addr-box{ display:flex; gap:6px; }
-  #addr-box input{ flex:1; border:1px solid #cfd2d8; border-radius:8px; padding:9px 10px; font-size:14px; outline:none; }
+  #addr-box input{ flex:1; border:1px solid #DCDDDD; border-radius:8px; padding:9px 10px; font-size:14px; outline:none; }
   #addr-box input:focus{ border-color:var(--blue); }
   #addr-box button{ border:0; background:var(--gold); color:#fff; border-radius:8px; padding:0 15px; font-weight:800; cursor:pointer; font-size:14px; }
-  .rcard{ margin-top:9px; border-radius:10px; overflow:hidden; border:1px solid #e3e3e8; display:none; }
+  .rcard{ margin-top:9px; border-radius:10px; overflow:hidden; border:1px solid #DCDDDD; display:none; }
   .rcard.show{ display:block; }
   .rcard .rhead{ background:var(--blue); color:#fff; padding:7px 11px; font-size:13.5px; font-weight:800; }
   .rcard .rbody{ padding:4px 11px; background:#fff; }
   .tier{ display:flex; align-items:flex-start; gap:9px; padding:8px 0; }
-  .tier + .tier{ border-top:1px dashed #eee; }
+  .tier + .tier{ border-top:1px dashed #DCDDDD; }
   .dot{ width:11px; height:11px; border-radius:50%; margin-top:5px; flex:none; }
-  .dot.g{ background:#2e9e5b; } .dot.y{ background:#e0a021; } .dot.r{ background:#9aa0aa; }
-  .tier .lvl2{ font-size:11.5px; color:#7a8190; font-weight:700; }
-  .tier .sch{ font-size:15px; font-weight:800; color:#20242b; }
-  .tier.y .sch{ color:#8a5a12; } .tier.r .sch{ color:#9aa0aa; font-size:14px; }
+  .dot.g{ background:#2e9e5b; } .dot.y{ background:#e0a021; } .dot.r{ background:#989DA0; }
+  .tier .lvl2{ font-size:11.5px; color:#7B8388; font-weight:700; }
+  .tier .sch{ font-size:15px; font-weight:800; color:#062345; }
+  .tier.y .sch{ color:#8a5a12; } .tier.r .sch{ color:#989DA0; font-size:14px; }
   .tier .note{ font-size:11.5px; color:#8a6d1e; line-height:1.5; margin-top:1px; }
-  .tier.g .note{ color:#9aa0aa; }
-  .rcard .rfoot{ padding:8px 11px; background:var(--grey-l); border-top:1px solid var(--grey); font-size:11.5px; color:#41505f; line-height:1.55; }
+  .tier.g .note{ color:#989DA0; }
+  .rcard .rfoot{ padding:8px 11px; background:var(--grey-l); border-top:1px solid var(--grey); font-size:11.5px; color:#062345; line-height:1.55; }
   .rcard .rfoot a{ color:var(--blue); font-weight:800; }
   .addr-title{ font-weight:800; color:var(--blue); font-size:14px; margin-bottom:7px; }
 
   /* banner 聯絡資訊 */
-  #bar .contact{ display:flex; align-items:center; gap:12px; color:#eaf0f7; font-size:14px; margin-right:14px; }
+  #bar .contact{ display:flex; align-items:center; gap:12px; color:#F7F8F8; font-size:14px; margin-right:14px; }
   #bar .contact .ci{ white-space:nowrap; }
   #bar .contact .c-name{ font-weight:800; font-size:15px; color:#fff; }
-  #bar .contact .addr{ font-size:13px; color:#c7d2e0; }
+  #bar .contact .addr{ font-size:13px; color:#DCDDDD; }
   #bar .contact .tel-btn{ display:inline-flex; align-items:center; gap:6px; background:#fff; color:var(--blue); font-weight:800; font-size:16px; letter-spacing:.5px; border-radius:8px; padding:6px 14px; text-decoration:none; box-shadow:0 1px 5px rgba(0,0,0,.25); }
-  #bar .contact .tel-btn:hover{ background:#eef2f8; }
+  #bar .contact .tel-btn:hover{ background:#F7F8F8; }
   #bar .contact a.line{ background:#06C755; color:#fff; font-weight:800; border-radius:8px; padding:7px 14px; text-decoration:none; font-size:14px; white-space:nowrap; }
   @media (max-width:1360px){ #bar .contact .addr{ display:none; } }
   @media (max-width:1040px){ #bar .contact .c-name{ display:none; } }
@@ -161,7 +163,7 @@
       <div class="rhead" id="rhead"></div>
       <div class="rbody" id="rbody"></div>
       <div class="rfoot">⚠️ 學區以官方公告為準，交界／門牌可能不同。<a href="https://std.tn.edu.tw/sis/anonyquery/SchoolDistrict.aspx" target="_blank" rel="noopener">前往官方查詢 →</a>
-        <div id="maker" style="margin-top:6px;color:#7a8190">製作：<b style="color:var(--blue)">齊家不動產 周士煒</b>　<a class="a-line" href="https://lin.ee/tLimTPs" target="_blank" rel="noopener" style="color:#06934a;font-weight:800">LINE 洽詢</a></div>
+        <div id="maker" style="margin-top:6px;color:#7B8388">製作：<b style="color:var(--blue)">齊家不動產 周士煒</b>　<a class="a-line" href="https://lin.ee/tLimTPs" target="_blank" rel="noopener" style="color:#06934a;font-weight:800">LINE 洽詢</a></div>
       </div>
     </div>
   </div>
@@ -398,7 +400,7 @@ async function lookupAddr(){
   const c=CENT[p.dist+'|'+hit.li];
   if(c){
     if(addrMarker) map.removeLayer(addrMarker);
-    addrMarker=L.marker([c[0],c[1]]).addTo(map).bindPopup(`<div class="pop-h">${p.dist}${hit.li} ${hit.kin}鄰</div>國小：${gsR.schools[0]||'—'}<br>國中：${jhR.schools[0]||'—'}<div style="margin-top:6px;font-size:11px;color:#8a94a2">製作：齊家不動產 ${esc(AGENT.name)}</div>`+ctaHtml(),{minWidth:230});
+    addrMarker=L.marker([c[0],c[1]]).addTo(map).bindPopup(`<div class="pop-h">${p.dist}${hit.li} ${hit.kin}鄰</div>國小：${gsR.schools[0]||'—'}<br>國中：${jhR.schools[0]||'—'}<div style="margin-top:6px;font-size:11px;color:#989DA0">製作：齊家不動產 ${esc(AGENT.name)}</div>`+ctaHtml(),{minWidth:230});
     map.setView([c[0],c[1]],15); addrMarker.openPopup();
   }
 }
