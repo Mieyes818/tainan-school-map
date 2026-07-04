@@ -5,33 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>業務專屬連結產生器｜齊家不動產</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-  :root{ --navy:#1C3D65; --green:#407864; --greenl:#5E8472; --grey:#DCDDDD; --greyl:#F5F6F7; --ink:#20242b; }
+  :root{ --blue:#1C3D65; --blue-d:#00355E; --navy:#062345; --blue-m:#325B8E; --blue-l:#7DA3CA; --grey:#DCDDDD; --grey-l:#F7F8F8; --grey-t:#7B8388; }
   *{ box-sizing:border-box; }
-  body{ margin:0; font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif; color:var(--ink);
-        background:var(--greyl); min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:26px 16px 60px; }
-  .card{ background:#fff; width:min(460px,100%); border-radius:16px; box-shadow:0 12px 40px rgba(28,61,101,.14); border:1px solid #e6e9ec; overflow:hidden; }
-  .top{ background:linear-gradient(90deg,#16324f,var(--navy)); padding:20px 22px; border-bottom:3px solid var(--green); display:flex; align-items:center; gap:12px; }
+  body{ margin:0; font-family:"Franklin Gothic Medium","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif; color:var(--navy);
+        background:var(--grey-l); min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:26px 16px 60px; }
+  .card{ background:#fff; width:min(460px,100%); border-radius:16px; box-shadow:0 12px 40px rgba(28,61,101,.14); border:1px solid var(--grey); overflow:hidden; }
+  .top{ background:linear-gradient(90deg,var(--blue-d),var(--blue)); padding:20px 22px; border-bottom:3px solid var(--blue-l); display:flex; align-items:center; gap:12px; }
   .top img{ height:46px; width:auto; background:#fff; border-radius:9px; padding:4px 8px; box-shadow:0 1px 4px rgba(0,0,0,.2); }
   .top h1{ margin:0; color:#fff; font-size:17px; font-weight:800; line-height:1.3; }
-  .top h1 small{ display:block; font-size:11.5px; font-weight:500; color:#7EAC96; letter-spacing:1px; margin-top:2px; }
+  .top h1 small{ display:block; font-size:11.5px; font-weight:500; color:var(--blue-l); letter-spacing:1px; margin-top:2px; }
   .body{ padding:20px 22px 22px; }
-  .note{ font-size:13px; color:#5a6472; line-height:1.7; background:var(--greyl); border:1px solid var(--grey); border-radius:10px; padding:11px 13px; margin-bottom:18px; }
-  label{ display:block; font-size:13.5px; font-weight:700; color:#333; margin-bottom:13px; }
-  label input{ display:block; width:100%; margin-top:5px; border:1px solid #cfd2d8; border-radius:9px; padding:11px 12px; font-size:15px; outline:none; }
-  label input:focus{ border-color:var(--navy); }
-  .hint{ font-weight:500; color:#9098a3; font-size:11.5px; margin-top:3px; }
-  .gen{ width:100%; border:0; background:var(--navy); color:#fff; font-weight:800; font-size:15px; padding:13px; border-radius:10px; cursor:pointer; margin-top:4px; }
-  .gen:hover{ background:#16324f; }
+  .note{ font-size:13px; color:var(--grey-t); line-height:1.7; background:var(--grey-l); border:1px solid var(--grey); border-radius:10px; padding:11px 13px; margin-bottom:18px; }
+  .note b{ color:var(--blue); }
+  label{ display:block; font-size:13.5px; font-weight:700; color:var(--navy); margin-bottom:13px; }
+  label input{ display:block; width:100%; margin-top:5px; border:1px solid var(--grey); border-radius:9px; padding:11px 12px; font-size:15px; outline:none; font-family:inherit; }
+  label input:focus{ border-color:var(--blue); }
+  .hint{ font-weight:500; color:var(--grey-t); font-size:11.5px; margin-top:3px; }
+  .gen{ width:100%; border:0; background:var(--blue); color:#fff; font-weight:800; font-size:15px; padding:13px; border-radius:10px; cursor:pointer; margin-top:4px; font-family:inherit; }
+  .gen:hover{ background:var(--blue-d); }
   #out{ display:none; margin-top:20px; padding-top:18px; border-top:1px dashed var(--grey); }
   #out.show{ display:block; }
-  #out .olbl{ font-size:13px; font-weight:800; color:var(--navy); margin-bottom:8px; }
-  #url{ width:100%; border:1px solid #cfd2d8; border-radius:9px; padding:11px; font-size:12.5px; color:#333; background:var(--greyl); }
+  #out .olbl{ font-size:13px; font-weight:800; color:var(--blue); margin-bottom:8px; }
+  .urlrow{ display:flex; align-items:center; gap:8px; background:var(--grey-l); border:1px solid var(--grey); border-radius:9px; padding:10px 12px; }
+  .urlrow a{ flex:1; color:var(--blue); font-weight:700; font-size:12.5px; word-break:break-all; text-decoration:underline; }
+  .urlrow button{ flex:none; border:1px solid var(--blue-l); background:#fff; color:var(--blue); font-weight:800; font-size:12.5px; border-radius:7px; padding:7px 12px; cursor:pointer; font-family:inherit; }
   .acts{ display:flex; gap:9px; margin-top:11px; }
-  .acts a,.acts button{ flex:1; text-align:center; border:0; border-radius:9px; padding:12px; font-weight:800; font-size:14px; cursor:pointer; text-decoration:none; }
-  #copy{ background:var(--green); color:#fff; }
-  .prev{ background:#eef1f3; color:var(--navy); border:1px solid var(--grey)!important; }
-  .foot{ font-size:11.5px; color:#9098a3; line-height:1.6; margin-top:16px; }
+  .acts a,.acts button{ flex:1; text-align:center; border:0; border-radius:9px; padding:12px; font-weight:800; font-size:14px; cursor:pointer; text-decoration:none; font-family:inherit; }
+  #copy2{ background:var(--blue); color:#fff; }
+  .prev{ background:var(--grey-l); color:var(--blue); border:1px solid var(--grey)!important; }
+  #qrbox{ margin-top:16px; text-align:center; display:none; }
+  #qrbox.show{ display:block; }
+  #qrbox .qlbl{ font-size:12.5px; font-weight:800; color:var(--blue); margin-bottom:8px; }
+  #qr{ display:inline-block; background:#fff; padding:10px; border:1px solid var(--grey); border-radius:10px; }
+  #qr img,#qr canvas{ display:block; }
+  #qrdl{ display:inline-block; margin-top:9px; font-size:12.5px; font-weight:800; color:var(--blue); text-decoration:underline; cursor:pointer; }
+  .foot{ font-size:11.5px; color:var(--grey-t); line-height:1.6; margin-top:16px; }
 </style>
 </head>
 <body>
@@ -41,36 +52,52 @@
     <h1>業務專屬連結產生器<small>齊家不動產 × 台南學區地圖</small></h1>
   </div>
   <div class="body">
-    <div class="note">填你的聯絡方式 → 產生你的專屬網址 → 傳給客戶。客戶打開後，地圖上方的<b>姓名／電話／LINE</b>都會是你的（齊家品牌、學區資料不變）。<br>此頁僅供業務使用，<b>請勿把此頁網址給客戶</b>——只傳「產生出來的連結」。</div>
+    <div class="note">填你的聯絡方式 → 產生你的專屬網址 → 傳給客戶。客戶打開後，地圖查詢泡泡與上方的<b>姓名／電話／LINE</b>都會是你的（齊家品牌、學區資料不變）。<br>此頁僅供業務使用，<b>請勿把此頁網址給客戶</b>——只傳「產生出來的連結」或 QR Code。</div>
     <label>姓名<input id="name" maxlength="20" placeholder="王小明"></label>
     <label>電話<input id="tel" maxlength="30" placeholder="0912-345-678"></label>
     <label>LINE 加好友連結<input id="line" placeholder="https://lin.ee/...">
-      <span class="hint">LINE 官方帳號後台→設定→行動條碼／加入好友連結。留空則用齊家公用 LINE。</span></label>
+      <span class="hint">LINE 官方帳號後台→加入好友指南，或個人 LINE→加入好友→邀請→複製連結。留空則用齊家公用 LINE。</span></label>
     <button class="gen" onclick="gen()">產生我的專屬連結</button>
     <div id="out">
       <div class="olbl">✅ 你的專屬分享連結（傳這個給客戶）</div>
-      <input id="url" readonly>
+      <div class="urlrow"><a id="ulink" href="#" target="_blank" rel="noopener"></a><button onclick="copyUrl(this)">複製</button></div>
       <div class="acts">
-        <button id="copy" onclick="copy(event)">複製連結</button>
+        <button id="copy2" onclick="copyUrl(this)">複製連結</button>
         <a class="prev" id="prev" target="_blank" rel="noopener">預覽</a>
       </div>
+      <div id="qrbox">
+        <div class="qlbl">📱 QR Code（給客戶掃，或存下來印在名片／DM）</div>
+        <div id="qr"></div>
+        <a id="qrdl" download="學區地圖QR.png">下載 QR 圖檔</a>
+      </div>
     </div>
-    <div class="foot">產生的連結可直接貼 LINE／FB 傳給客戶，或做成 QR Code。同一位業務固定用自己的連結即可。</div>
+    <div class="foot">產生的連結可直接貼 LINE／FB 傳給客戶。同一位業務固定用自己的連結即可，資料不會過期。</div>
   </div>
 </div>
+<script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
-function esc(s){ return String(s).replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
 function gen(){
   const n=document.getElementById('name').value.trim(), t=document.getElementById('tel').value.trim(), l=document.getElementById('line').value.trim();
   if(!n){ document.getElementById('name').focus(); return; }
   const u=new URL(location.origin+'/');
   if(n) u.searchParams.set('name',n); if(t) u.searchParams.set('tel',t); if(l) u.searchParams.set('line',l);
   const url=u.toString();
-  document.getElementById('url').value=url;
+  const a=document.getElementById('ulink'); a.textContent=url; a.href=url;
   document.getElementById('prev').href=url;
   document.getElementById('out').classList.add('show');
+  if(typeof QRCode!=='undefined'){
+    document.getElementById('qr').innerHTML='';
+    new QRCode(document.getElementById('qr'),{ text:url, width:180, height:180, colorDark:'#062345', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M });
+    document.getElementById('qrbox').classList.add('show');
+    setTimeout(()=>{ const c=document.querySelector('#qr canvas'); const img=document.querySelector('#qr img'); const d=document.getElementById('qrdl'); if(c) d.href=c.toDataURL('image/png'); else if(img) d.href=img.src; },300);
+  }
 }
-function copy(e){ const i=document.getElementById('url'); i.select(); try{navigator.clipboard.writeText(i.value);}catch(_){document.execCommand('copy');} e.target.textContent='已複製 ✓'; setTimeout(()=>e.target.textContent='複製連結',1500); }
+function copyUrl(btn){
+  const v=document.getElementById('ulink').textContent;
+  if(!v) return;
+  try{ navigator.clipboard.writeText(v); }catch(_){ const i=document.createElement('input'); document.body.appendChild(i); i.value=v; i.select(); document.execCommand('copy'); i.remove(); }
+  const t=btn.textContent; btn.textContent='已複製 ✓'; setTimeout(()=>btn.textContent=t,1500);
+}
 document.querySelectorAll('input').forEach(i=>i.addEventListener('keydown',e=>{ if(e.key==='Enter') gen(); }));
 </script>
 </body>
