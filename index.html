@@ -212,6 +212,12 @@ const AGENT = {
   line: _q.get('line')||'https://lin.ee/tLimTPs'
 };
 if(!/^https?:\/\//.test(AGENT.line)) AGENT.line='https://lin.ee/tLimTPs';
+function ctaHtml(){
+  const td = AGENT.tel.replace(/[^0-9+]/g,'');
+  return `<div class="pop-cta"><div class="cta-t">🏠 想找這個學區的房子？免費諮詢</div>`+
+    `<a class="cta-b line" href="${esc(AGENT.line)}" target="_blank" rel="noopener">LINE 預約諮詢</a>`+
+    `<a class="cta-b tel" href="tel:${td}">☎ ${esc(AGENT.name)}　${esc(AGENT.tel)}</a></div>`;
+}
 function applyAgent(){
   const nm=document.getElementById('c-name'); if(nm) nm.textContent='👤 '+AGENT.name;
   const tel=document.getElementById('c-tel'); if(tel){ tel.href='tel:'+AGENT.tel.replace(/[^0-9+]/g,''); const tn=tel.querySelector('.tn'); if(tn) tn.textContent=AGENT.tel; }
@@ -267,10 +273,7 @@ function buildZonePopup(p){
       return `<span class="pv">${area}${li}${k}</span>`;
     }).join('')+`</div>` : '';
   const n = vs.length || p.n_vill;
-  const _td = AGENT.tel.replace(/[^0-9+]/g,'');
-  const cta = `<div class="pop-cta"><div class="cta-t">🏠 想找這個學區的房子？免費諮詢</div>`+
-    `<a class="cta-b line" href="${esc(AGENT.line)}" target="_blank" rel="noopener">LINE 預約諮詢</a>`+
-    `<a class="cta-b tel" href="tel:${_td}">☎ ${esc(AGENT.name)}　${esc(AGENT.tel)}</a></div>`;
+  const cta = ctaHtml();
   return `<div class="pop-h">${p.school.replace(p.home,'')}</div>`+
     `<div class="pop-sub"><b>${p.level}</b> · ${p.home} · 學區共 <b>${n}</b> 里</div>`+
     body+
@@ -397,7 +400,7 @@ async function lookupAddr(){
   const c=CENT[p.dist+'|'+hit.li];
   if(c){
     if(addrMarker) map.removeLayer(addrMarker);
-    addrMarker=L.marker([c[0],c[1]]).addTo(map).bindPopup(`<div class="pop-h">${p.dist}${hit.li} ${hit.kin}鄰</div>國小：${gsR.schools[0]||'—'}<br>國中：${jhR.schools[0]||'—'}<div style="margin-top:6px;font-size:11px;color:#8a94a2">製作：齊家不動產 ${esc(AGENT.name)}</div>`);
+    addrMarker=L.marker([c[0],c[1]]).addTo(map).bindPopup(`<div class="pop-h">${p.dist}${hit.li} ${hit.kin}鄰</div>國小：${gsR.schools[0]||'—'}<br>國中：${jhR.schools[0]||'—'}<div style="margin-top:6px;font-size:11px;color:#8a94a2">製作：齊家不動產 ${esc(AGENT.name)}</div>`+ctaHtml(),{minWidth:230});
     map.setView([c[0],c[1]],15); addrMarker.openPopup();
   }
 }
