@@ -206,12 +206,20 @@ L.tileLayer('https://wmts.nlsc.gov.tw/wmts/EMAP/default/GoogleMapsCompatible/{z}
 /* ---- 業務分享版:網址參數帶入業務聯絡資訊 ---- */
 const _q = new URLSearchParams(location.search);
 function esc(s){ return String(s).replace(/[<>&"]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
-const AGENT = {
-  name: (_q.get('name')||'周士煒').slice(0,20),
-  tel:  (_q.get('tel') ||'0985-277-962').slice(0,30),
-  line: _q.get('line')||'https://lin.ee/tLimTPs'
-};
-if(!/^https?:\/\//.test(AGENT.line)) AGENT.line='https://lin.ee/tLimTPs';
+const AGENT = { name:'周士煒', tel:'0985-277-962', line:'https://lin.ee/tLimTPs' };
+/* 白名單制:只認 ?a=業務代號,對照站上 agents.json 名冊;未登記代號一律用預設 */
+const _ac = (_q.get('a')||'').trim().toLowerCase().slice(0,24);
+if(_ac){
+  fetch('agents.json').then(r=>r.json()).then(j=>{
+    const rec = j[_ac];
+    if(rec && rec.name){
+      AGENT.name = String(rec.name).slice(0,20);
+      AGENT.tel  = String(rec.tel||AGENT.tel).slice(0,30);
+      if(/^https?:\/\//.test(rec.line||'')) AGENT.line = rec.line;
+      applyAgent();
+    }
+  }).catch(()=>{});
+}
 function ctaHtml(){
   const td = AGENT.tel.replace(/[^0-9+]/g,'');
   return `<div class="pop-cta"><div class="cta-t">🏠 想找這個學區的房子？免費諮詢</div>`+
@@ -249,13 +257,13 @@ function buildLayer(level, data){
     onEachFeature: (f, l) => {
       const p = f.properties;
       l.bindTooltip(p.school.replace(p.home,''), {sticky:true, className:'zone-label', direction:'top', opacity:1});
-      l.bindPopup(buildZonePopup(p), {maxWidth:344, maxHeight:380});
+      l.bindPopup(()=>buildZonePopup(p), {maxWidth:344, maxHeight:380});
       l.on('mouseover', ()=> l.setStyle({weight:3.2, color:'#12325a', fillOpacity:.5}));
       l.on('mouseout',  ()=> lyr.resetStyle(l));
       const pt = SCHOOL_POINTS[p.school];
       let mk = null;
       if(pt){ mk = L.marker([pt[0],pt[1]], {icon:schoolIcon(), title:p.school.replace(p.home,'')});
-        mk.bindPopup(buildZonePopup(p), {maxWidth:344, maxHeight:380});
+        mk.bindPopup(()=>buildZonePopup(p), {maxWidth:344, maxHeight:380});
         markerGroups[level].addLayer(mk); }
       store[level].push({name:p.school, home:p.home, layer:l, marker:mk});
     }
