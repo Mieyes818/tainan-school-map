@@ -63,6 +63,20 @@
         font-weight:800; font-size:13.5px; padding:9px; border-radius:8px; margin-top:2px; }
   .disc{ background:var(--grey-l); border:1px solid var(--grey); color:#062345; border-radius:8px; padding:8px 10px; font-size:12px; line-height:1.6; }
   .disc b{ color:var(--blue); }
+  .rp-open{ display:block; width:100%; margin-top:7px; border:1px dashed var(--accent-l); background:#fff; color:var(--green-l); border-radius:8px; padding:8px; font-weight:700; font-size:12.5px; cursor:pointer; }
+  .rp-open:hover{ background:var(--grey-l); }
+  #report-mask{ position:fixed; inset:0; z-index:3000; background:rgba(6,35,69,.5); display:none; align-items:center; justify-content:center; padding:16px; }
+  #report-mask.show{ display:flex; }
+  .report-card{ position:relative; background:#fff; width:min(400px,100%); max-height:90vh; overflow-y:auto; border-radius:14px; padding:20px 20px 22px; box-shadow:0 18px 50px rgba(6,35,69,.3); }
+  .rp-x{ position:absolute; top:12px; right:14px; border:0; background:none; font-size:22px; color:#989DA0; cursor:pointer; line-height:1; }
+  .rp-h{ font-size:17px; font-weight:800; color:var(--blue); }
+  .rp-sub{ font-size:12.5px; color:#7B8388; line-height:1.6; margin:5px 0 14px; }
+  .rp-l{ display:block; font-size:13px; font-weight:700; color:#062345; margin-bottom:11px; }
+  .rp-l select,.rp-l input,.rp-l textarea{ display:block; width:100%; margin-top:5px; border:1px solid var(--grey); border-radius:8px; padding:9px 10px; font-size:14px; font-family:inherit; outline:none; }
+  .rp-l select:focus,.rp-l input:focus,.rp-l textarea:focus{ border-color:var(--blue); }
+  .rp-tip{ font-size:11.5px; color:#7B8388; line-height:1.6; margin-bottom:12px; }
+  .rp-submit{ width:100%; border:0; background:var(--blue); color:#fff; font-weight:800; font-size:15px; padding:12px; border-radius:9px; cursor:pointer; }
+  .rp-submit:hover{ background:var(--navy-d); }
   .toggle{ cursor:pointer; user-select:none; }
 
   /* legend chip */
@@ -210,6 +224,7 @@
   <div class="sec">
     <div class="disc"><b>學區僅供參考｜以官方為準（115 學年度）。</b>本圖以「里」為單位上色，官方學區部分切至「鄰／門牌」，交界處請務必查官方系統確認。學區每年得調整。</div>
     <a class="btn-official" href="https://std.tn.edu.tw/sis/anonyquery/SchoolDistrict.aspx" target="_blank" rel="noopener">🔎 查官方學區（台南市教育局）</a>
+    <button class="rp-open" onclick="openReport()">🗳️ 學區資料有誤、查不到你家？點我回報</button>
   </div>
   <div class="sec muted">
     學區：台南市教育局學區查詢系統（官方，鄰級，115 學年度）；門牌：台南市政府門牌坐標開放資料；村里界：內政部 2026／04。
@@ -221,6 +236,38 @@
   <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2C6.48 2 2 5.64 2 10.13c0 4.02 3.55 7.39 8.35 8.03.32.07.77.21.88.49.1.25.07.64.03.9l-.14.85c-.04.25-.2.98.86.53s5.7-3.36 7.78-5.75C21.2 13.5 22 11.9 22 10.13 22 5.64 17.52 2 12 2zM8.2 12.3H6.6c-.24 0-.43-.2-.43-.43V8.68c0-.24.2-.43.43-.43s.43.2.43.43v2.75H8.2c.24 0 .43.2.43.43s-.19.44-.43.44zm1.7-.43c0 .24-.2.43-.43.43s-.43-.2-.43-.43V8.68c0-.24.2-.43.43-.43s.43.2.43.43v3.19zm3.85 0c0 .19-.12.35-.3.41a.44.44 0 0 1-.49-.16l-1.63-2.22v1.97c0 .24-.2.43-.43.43s-.43-.2-.43-.43V8.68c0-.19.12-.35.3-.41.05-.02.1-.02.14-.02.13 0 .26.07.35.18l1.64 2.22V8.68c0-.24.2-.43.43-.43s.43.2.43.43v3.19zm2.77-2.02c.24 0 .43.2.43.43s-.2.44-.43.44h-1.16v.72h1.16c.24 0 .43.2.43.43s-.2.43-.43.43h-1.6c-.23 0-.42-.2-.42-.43V8.68c0-.24.2-.43.43-.43h1.6c.23 0 .42.2.42.43s-.2.44-.43.44h-1.16v.72h1.16z"/></svg>
   LINE 洽詢
 </a>
+
+<form name="school-report" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input name="type"><input name="addr"><textarea name="message"></textarea><input name="tel"><input name="line"><input name="bot-field">
+</form>
+<div id="report-mask" onclick="if(event.target===this)closeReport()">
+  <div class="report-card">
+    <button class="rp-x" onclick="closeReport()" aria-label="關閉">×</button>
+    <div class="rp-h">🗳️ 問題回報</div>
+    <div class="rp-sub">學區資料有誤、查不到你家、或想給我們建議？告訴我們，會盡快處理。</div>
+    <form id="report-form" onsubmit="submitReport(event)" name="school-report" data-netlify="true" netlify-honeypot="bot-field">
+      <input type="hidden" name="form-name" value="school-report">
+      <p hidden><input name="bot-field"></p>
+      <label class="rp-l">這是什麼問題？
+        <select name="type" required>
+          <option value="">請選擇</option>
+          <option>學區資料怪怪的</option><option>查不到我家地址</option>
+          <option>網站操作問題</option><option>其他建議</option>
+        </select></label>
+      <label class="rp-l">相關地址／里（選填）<input name="addr" id="rp-addr" placeholder="已帶入你剛查的" autocomplete="off"></label>
+      <label class="rp-l">你想反映什麼？<textarea name="message" rows="3" required placeholder="例：我家在OO里OO路X號，查到的學校跟公告不一樣"></textarea></label>
+      <label class="rp-l">電話（選填）<input name="tel" inputmode="tel" autocomplete="off"></label>
+      <label class="rp-l">LINE（選填）<input name="line" autocomplete="off"></label>
+      <div class="rp-tip">💡 留了聯絡方式，我們查清楚後可以直接回覆你（不留也沒關係，一樣會修正）。</div>
+      <button type="submit" class="rp-submit">送出回報</button>
+    </form>
+    <div id="report-done" style="display:none;text-align:center;padding:6px 0 4px">
+      <div style="font-size:34px">🙏</div><div class="rp-h">收到了，謝謝你！</div>
+      <div class="rp-sub">我們會盡快查看並修正。若你有留聯絡方式，查清楚後會回覆你。</div>
+      <button class="rp-submit" onclick="closeReport()">關閉</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -502,6 +549,25 @@ function geoLocate(){
     btn.disabled=false; btn.textContent='📍 用我目前的位置查學區';
     msg.textContent = err.code===1 ? '定位被拒絕，請允許瀏覽器取用位置' : '定位失敗，請確認已開啟定位';
   }, {enableHighAccuracy:true, timeout:12000, maximumAge:30000});
+}
+
+/* ---- 問題回報(Netlify Forms,免後端) ---- */
+function openReport(){
+  const a=document.getElementById('addr'); const rh=document.getElementById('rhead');
+  document.getElementById('rp-addr').value = (a&&a.value.trim()) || (rh&&rh.textContent.replace(/^📍\s*/,'').trim()) || '';
+  document.getElementById('report-form').style.display='';
+  document.getElementById('report-done').style.display='none';
+  document.getElementById('report-mask').classList.add('show');
+}
+function closeReport(){ document.getElementById('report-mask').classList.remove('show'); }
+function submitReport(e){
+  e.preventDefault();
+  const f=e.target, btn=f.querySelector('.rp-submit');
+  const data=Object.fromEntries(new FormData(f));
+  btn.disabled=true; btn.textContent='送出中…';
+  fetch('https://cs-hub-ba9.pages.dev/api/report',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(r=>r.json()).then(j=>{ if(j&&j.ok){ f.style.display='none'; document.getElementById('report-done').style.display='block'; } else throw 0; })
+    .catch(()=>{ btn.disabled=false; btn.textContent='送出失敗，請再試一次'; });
 }
 
 Promise.all([
