@@ -399,17 +399,29 @@ const var_gold = '#1C3D65';
 let SCHOOL_VILLAGES = {};
 function buildZonePopup(p){
   const vs = SCHOOL_VILLAGES[p.school] || [];
+  const T = p.level==='國中' ? NLIN.jh : NLIN.gs;
+  const shortName = p.school.replace(p.home,'');
+  const shared = {};   // key:d|li → 其他共同學區學校
+  let sharedN = 0;
   const body = vs.length ? `<div class="pop-lis">`+vs.map(v=>{
       const d=v[0], li=v[1], kin=v[2];
       const area=(d && d!==p.home)?`<i>${d}</i>`:'';
       const k=(kin==='全'||!kin)?'':`<b>${kin.replace('鄰','')}鄰</b>`;
-      return `<span class="pv">${area}${li}${k}</span>`;
+      const rec = T && T[d+'|'+li];
+      let star='';
+      if(rec && (rec.all||[]).length>1 && (rec.all||[]).includes(shortName)){
+        star='⭐'; sharedN++;
+        (rec.all||[]).forEach(s=>{ if(s!==shortName) shared[s]=1; });
+      }
+      return `<span class="pv">${star}${area}${li}${k}</span>`;
     }).join('')+`</div>` : '';
   const n = vs.length || p.n_vill;
+  const others = Object.keys(shared);
+  const freeNote = sharedN ? `<div style="margin-top:6px;font-size:11.5px;color:#325B8E;line-height:1.6">⭐＝共同（自由）學區：這些里同時屬 <b>${others.join('、')}</b>，可自由選讀。地圖每里僅上一色，實際兩校皆可。</div>` : '';
   const cta = ctaHtml();
-  return `<div class="pop-h">${p.school.replace(p.home,'')}</div>`+
-    `<div class="pop-sub"><b>${p.level}</b> · ${p.home} · 學區共 <b>${n}</b> 里</div>`+
-    body+
+  return `<div class="pop-h">${shortName}</div>`+
+    `<div class="pop-sub"><b>${p.level}</b> · ${p.home} · 學區共 <b>${n}</b> 里${sharedN?`（含 ${sharedN} 個共同學區里）`:''}</div>`+
+    body+ freeNote+
     `<div class="pop-foot">交界依「鄰」細分，以官方公告為準　<a href="https://std.tn.edu.tw/sis/anonyquery/SchoolDistrict.aspx" target="_blank" rel="noopener">官方查詢 →</a></div>`+
     cta;
 }
