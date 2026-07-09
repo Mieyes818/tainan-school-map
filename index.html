@@ -385,18 +385,48 @@ function buildLayer(level, data){
       l.bindPopup(()=>buildZonePopup(p), {maxWidth:344, maxHeight:380});
       l.on('mouseover', ()=> l.setStyle({weight:3.2, color:'#12325a', fillOpacity:.5}));
       l.on('mouseout',  ()=> lyr.resetStyle(l));
+      l.on('click', ()=> highlightSchool(p, level, cidx[p.school]));
       const pt = SCHOOL_POINTS[p.school];
       let mk = null;
       if(pt){ mk = L.marker([pt[0],pt[1]], {icon:schoolIcon(), title:p.school.replace(p.home,'')});
         mk.bindPopup(()=>buildZonePopup(p), {maxWidth:344, maxHeight:380});
+        mk.on('click', ()=> highlightSchool(p, level, cidx[p.school]));
         markerGroups[level].addLayer(mk); }
-      store[level].push({name:p.school, home:p.home, layer:l, marker:mk});
+      store[level].push({name:p.school, home:p.home, layer:l, marker:mk, ci:cidx[p.school]});
     }
   });
   return lyr;
 }
 const var_gold = '#1C3D65';
 let SCHOOL_VILLAGES = {};
+
+/* ---- 點擊學校:高亮完整學區(含共同學區里),每校用自己的顏色 ---- */
+let LI_POLYS=null, HL=L.layerGroup(), HL_KEY='';
+async function liPolys(){ if(!LI_POLYS){ LI_POLYS=await fetch('li_polys.json').then(r=>r.json()).catch(()=>({})); } return LI_POLYS; }
+async function highlightSchool(p, level, ci){
+  const key=level+'|'+p.school;
+  if(HL_KEY===key) return;
+  HL_KEY=key; HL.clearLayers(); HL.addTo(map);
+  const fill=colorFor(ci), edge=strokeFor(ci);
+  const T = level==='jh' ? NLIN.jh : NLIN.gs;
+  const shortName = p.school.replace(p.home,'');
+  // 1) 自己的 dissolve 面
+  const own = store[level].find(o=>o.name===p.school);
+  if(own && own.layer && own.layer.feature)
+    L.geoJSON(own.layer.feature, {style:{color:edge, weight:3.5, fillColor:fill, fillOpacity:.55}, interactive:false}).addTo(HL);
+  // 2) 共同學區里(塗給別校的面)也用本校色亮起來
+  const polys = await liPolys();
+  if(HL_KEY!==key) return;
+  (SCHOOL_VILLAGES[p.school]||[]).forEach(v=>{
+    const d=v[0], li=v[1], rec=T && T[d+'|'+li];
+    if(!(rec && (rec.all||[]).length>1 && rec.all.includes(shortName))) return;
+    (polys[d+'|'+li]||[]).forEach(rings=>{
+      L.polygon(rings.map(r=>r.map(pt=>[pt[1],pt[0]])), {color:edge, weight:3.5, dashArray:'6 4', fillColor:fill, fillOpacity:.55, interactive:false}).addTo(HL);
+    });
+  });
+}
+function clearHighlight(){ HL.clearLayers(); HL_KEY=''; }
+
 function buildZonePopup(p){
   const vs = SCHOOL_VILLAGES[p.school] || [];
   const T = p.level==='國中' ? NLIN.jh : NLIN.gs;
@@ -437,6 +467,7 @@ function refreshLabels(level){
 function switchLevel(level){
   if(level===current && layers[level]) return;
   ['gs','jh'].forEach(k=>{ if(layers[k] && map.hasLayer(layers[k])) map.removeLayer(layers[k]); if(map.hasLayer(markerGroups[k])) map.removeLayer(markerGroups[k]); });
+  clearHighlight();
   current = level;
   document.getElementById('btn-gs').classList.toggle('on', level==='gs');
   document.getElementById('btn-jh').classList.toggle('on', level==='jh');
